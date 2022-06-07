@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <title>Geolocation</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=9" >
+		
+		<style>
+            #map {
+                height: 100%;
+            }
+
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+			
+			#over_map {
+                position: absolute;
+                top: 10px;
+                left: 1%;
+                z-index: 99;
+                background-color: #D3D3D3;
+                padding: 10px;
+            }
+			
+		</style>
+	</head>
+	<body>
+		<div id="map"></div>
+
+        <div id="over_map">
+            <div>
+                <span>Online Cars: </span><span id="cars">0</span><br>
+				<!--<input id="someInput" type="text" placeholder="Search for names.." onClick="search()">
+				<input type="button" id="someInput" value="Say Hello" onClick="search()"> -->
+				
+            </div>
+        </div>
+		
+		<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+		<script src="https://cdn.firebase.com/libs/geofire/4.1.2/geofire.min.js"></script>
+		  
+		
+		
+		
+		<script>
+				
+		  
+		  var firebaseConfig = {
+			apiKey: "AIzaSyAoFNKWxD1Kl6giuC9XAW0OPH04SU67JFU",
+			authDomain: "vehicle-tracking-56867.firebaseapp.com",
+			databaseURL: "https://vehicle-tracking-56867.firebaseio.com",
+			projectId: "vehicle-tracking-56867",
+			storageBucket: "vehicle-tracking-56867.appspot.com",
+			messagingSenderId: "203039696243",
+			appId: "1:203039696243:web:d6e5a19fc7b5e3d7969106",
+			measurementId: "G-2TNGB8G1RD"
+		  };
+          firebase.initializeApp(firebaseConfig);
+		  
+		  
+		  
+		  
+		  var cars_count = 0;
+		  var markers = [];
+		  var map, infoWindow;
+		  function initMap() {
+			map = new google.maps.Map(document.getElementById('map'), {
+			  center: new google.maps.LatLng(37.980397, 23.726226),
+			  zoom: 10
+			});
+			
+		  }
+          
+		  function AddCar(data) {
+			var icon = { // car icon
+				path: 'M29.395,0H17.636c-3.117,0-5.643,3.467-5.643,6.584v34.804c0,3.116,2.526,5.644,5.643,5.644h11.759   c3.116,0,5.644-2.527,5.644-5.644V6.584C35.037,3.467,32.511,0,29.395,0z M34.05,14.188v11.665l-2.729,0.351v-4.806L34.05,14.188z    M32.618,10.773c-1.016,3.9-2.219,8.51-2.219,8.51H16.631l-2.222-8.51C14.41,10.773,23.293,7.755,32.618,10.773z M15.741,21.713   v4.492l-2.73-0.349V14.502L15.741,21.713z M13.011,37.938V27.579l2.73,0.343v8.196L13.011,37.938z M14.568,40.882l2.218-3.336   h13.771l2.219,3.336H14.568z M31.321,35.805v-7.872l2.729-0.355v10.048L31.321,35.805',
+				scale: 0.4,
+				fillColor: "#427af4", //<-- Car Color, you can change it 
+				fillOpacity: 1,
+				strokeWeight: 1,
+				anchor: new google.maps.Point(0, 5),
+				rotation: data.val().angle //<-- Car angle
+			};
+			
+			var pst = { lat: data.val().lat, lng: data.val().lng };
+		  
+		    var marker = new google.maps.Marker({
+				position: pst,
+				icon: icon,
+				map: map
+		    });
+			 markers[data.key] = marker; // add marker in the markers array...
+            document.getElementById("cars").innerHTML = cars_count;
+		  
+		  }
+		  
+			  //Create a node at firebase location to add locations as child keys
+		  var locationsRef = firebase.database().ref().child('Users');
+		 
+		  locationsRef.on('child_added', function(data) {
+			cars_count++;
+			AddCar(data);
+		  });
+		  
+		  // this event will be triggered on location change of any car...
+          locationsRef.on('child_changed', function (data) {
+              markers[data.key].setMap(null);
+              AddCar(data);
+            });
+
+            // If any car goes offline then this event will get triggered and we'll remove the marker of that car...  
+            locationsRef.on('child_removed', function (data) {
+                markers[data.key].setMap(null);
+                cars_count--;
+                document.getElementById("cars").innerHTML = cars_count;
+            });
+		  
+		
+		</script>
+		
+		
+		
+		<script async defer src="https://maps.googleapis.com/maps/api/js?AIzaSyAFZlMjBYVdyiTU5UoXyXmLM_haYD9TSFE&callback=initMap">
+		</script>
+	</body>
+</html>
